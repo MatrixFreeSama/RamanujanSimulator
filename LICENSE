@@ -1,0 +1,128 @@
+MatrixFreeSama Permissive License 2.0 (MFSPL 2.0)
+
+Copyright (c) 2026 MatrixFreeSama
+
+1. Definitions
+
+"Licensor" means MatrixFreeSama or any copyright holder that expressly applies this License to the Software.
+
+"Software" means the source code, object code, executable code, documentation, preparatory design material, and other copyrightable material expressly distributed under this License.
+
+"Covered Derivative Material" means a copy, modification, translation, port, refactoring, adaptation, derivative work, or other material that reproduces or adapts protected expression from the Software.
+
+"Covered Material" means the Software and Covered Derivative Material.
+
+"Independent Implementation" means a work created without reproducing or adapting protected expression from the Covered Material, even if it is inspired by, compatible with, mathematically similar to, or based on the same ideas, principles, algorithms, methods, interfaces, facts, concepts, techniques, or research direction.
+
+"Licensee" means any person or legal entity exercising a permission granted by this License.
+
+"Provenance Notice" means a direct written notice sent by the Licensor to a particular Licensee that identifies the Covered Material concerned and states one or more requirements permitted by Section 4.
+
+"Designated Project Credit" means public-facing credit text designated by the Licensor. It may identify a natural person, legal person, organization, pseudonym, fictional character or fictional entity, a person or entity that did not participate in the research or implementation, the word "Anonymous", or other text chosen by the Licensor. A Designated Project Credit is a presentation label only. It does not create, transfer, erase, or determine legal authorship, ownership, contribution, endorsement, or historical fact.
+
+2. Permission Grant
+
+Permission is hereby granted, free of charge, to every Licensee to use, reproduce, execute, study, modify, adapt, translate, port, refactor, merge, publish, distribute, sublicense, sell, offer as part of a product or service, publicly perform or display where applicable, and otherwise exploit the Covered Material, in source or binary form, for commercial or non-commercial purposes, without prior notice, registration, reporting, approval, royalty, fee, or separate permission from the Licensor, subject only to this License and applicable law.
+
+This grant is intended to be as broad as legally possible and applies in every lawful field of endeavor.
+
+3. No Default Attribution, Notice, or Provenance Disclosure
+
+Before a valid Provenance Notice is received, this License imposes no requirement to:
+
+(a) name or credit MatrixFreeSama, Zining Kestis Wong, TensorCube, any contributor, or any other person or project;
+
+(b) retain or reproduce this License, a copyright notice, repository URL, project name, citation, attribution, provenance statement, source notice, or author list;
+
+(c) disclose that Covered Material was copied, modified, translated, ported, refactored, adapted, or incorporated;
+
+(d) publish source code or modifications;
+
+(e) notify the Licensor or any contributor of use, redistribution, modification, sale, deployment, or publication.
+
+A Licensee may rebrand Covered Material, incorporate it into another project, publish it under a different project name, and present it as part of the Licensee's own project without creating a license-based attribution or provenance-disclosure obligation before receipt of a valid Provenance Notice. This License, by itself, does not create a license-based prohibition on project-presentation language such as "original", "our own", or equivalent wording before receipt of a valid Provenance Notice.
+
+Nothing in this Section authorizes fraud, false advertising, impersonation, defamation, infringement of trademark or publicity rights, or any other conduct prohibited by applicable law. This License does not alter objective historical facts or legal authorship.
+
+4. Dormant Provenance and Project-Credit Covenant
+
+No obligation under this Section exists until the particular Licensee actually receives a valid Provenance Notice from the Licensor.
+
+A Provenance Notice may require one or more of the following with respect to Covered Material identified in the notice:
+
+(a) Provenance Acknowledgement. The Licensee must state, in the wording specified by the Licensor or in substantially equivalent factual wording, that the identified Covered Material or implementation derives from algorithmic research, software, documentation, or other Covered Material distributed by MatrixFreeSama. Such acknowledgement concerns provenance only and need not characterize the Licensor as the legal author of code not legally authored by the Licensor.
+
+(b) Direct Provenance Answer. If the Licensor directly asks the Licensee whether the identified Covered Material or implementation was derived from the Covered Material, the Licensee must answer truthfully and must not knowingly deny the identified derivation.
+
+(c) Designated Project Credit. The Licensee must add, replace, or display the Designated Project Credit specified by the Licensor in public-facing project credit, repository presentation, documentation, website presentation, application about-box or equivalent project-level presentation identified in the notice.
+
+(d) Removal or Replacement of Licensee Project Credit. The Licensee must remove or replace a public-facing project-level credit for the Licensee or another distributor where the Provenance Notice expressly requires that removal or replacement. This does not require falsification or deletion of legally required records, immutable third-party archives outside the Licensee's control, or factual contributor records where applicable law requires their preservation.
+
+A Designated Project Credit may be a fictional identity or an identity with no research or implementation participation. Its display must not be represented as proof of legal authorship, ownership, contribution, or endorsement.
+
+Unless the Provenance Notice grants a longer period, the Licensee has thirty (30) days after actual receipt to bring public-facing materials under the Licensee's control into compliance. Future public distributions made after that period must comply with the notice.
+
+A Provenance Notice may apply only to that Licensee and the Covered Material identified in the notice. It does not impose obligations on an Independent Implementation or on another person who has not received a valid Provenance Notice.
+
+5. Independent Ideas, Algorithms, and Implementations Are Outside This License
+
+This License does not claim exclusive control over ideas, principles, algorithms, methods, interfaces, facts, concepts, techniques, research directions, inspiration, or mathematical similarity as such.
+
+An Independent Implementation is not Covered Material merely because its logic, mathematics, algorithm, architecture, behavior, terminology, or research direction resembles the Software.
+
+No person becomes a Licensee merely by learning from, being inspired by, independently rediscovering, or independently implementing an idea, principle, algorithm, or method.
+
+6. Redistribution and Downstream Rights
+
+A Licensee may redistribute Covered Material without retaining this License or any attribution notice.
+
+The Licensor nevertheless intends the permissions in Section 2 to be available directly to every downstream recipient of Covered Material. A downstream recipient's obligations under Section 4 arise only if and to the extent that the downstream recipient is legally bound by this License and actually receives a valid Provenance Notice.
+
+No Licensee may represent that this License grants trademark, endorsement, publicity, or personality rights belonging to another person or entity.
+
+7. Non-Compliance, Cure, and Reinstatement
+
+If a Licensee fails to comply with a valid Provenance Notice after the applicable compliance period, the permissions granted to that Licensee under this License for the identified Covered Material terminate prospectively.
+
+The permissions are automatically reinstated when the Licensee fully cures the non-compliance, unless applicable law requires a different result.
+
+Termination or reinstatement under this Section affects only the relevant Licensee and does not terminate permissions previously granted directly by the Licensor to compliant downstream recipients.
+
+8. No Trademark or Endorsement License
+
+Except for factual provenance statements or Designated Project Credit required by a valid Provenance Notice, this License grants no trademark, service-mark, publicity, personality, or endorsement right in the name "MatrixFreeSama", "TensorCube", any logo, or any other protected name or mark.
+
+A required Designated Project Credit does not imply endorsement by the person or entity named in that credit.
+
+9. No Warranty
+
+THE COVERED MATERIAL IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, RELIABILITY, OR FITNESS OF RESULTS.
+
+10. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR AND CONTRIBUTORS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, PUNITIVE, OR CONSEQUENTIAL DAMAGES, OR FOR LOSS OF PROFITS, REVENUE, DATA, GOODWILL, BUSINESS OPPORTUNITY, OR BUSINESS INTERRUPTION, ARISING FROM OR RELATED TO THE COVERED MATERIAL OR THIS LICENSE, WHETHER IN CONTRACT, TORT, STRICT LIABILITY, OR OTHERWISE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+11. Applicable Law and Mandatory Rights
+
+This License grants no permission to violate applicable law and creates no immunity, defense, or exemption from applicable law.
+
+Nothing in this License is intended to waive, transfer, fabricate, or erase moral rights, authorship rights, attribution rights, personality rights, or other rights that applicable law makes non-waivable or non-transferable.
+
+If a provision of this License is unenforceable in a particular jurisdiction, that provision shall be applied to the maximum extent permitted there, and the remaining provisions shall remain effective to the extent permitted by law.
+
+12. Acceptance
+
+By exercising a permission granted by this License, a Licensee accepts and agrees to the conditions of this License to the extent such acceptance is recognized by applicable law.
+
+Where applicable law requires notice, knowledge, assent, privity, or another condition before a covenant can bind a person, that covenant applies only to the extent those requirements are satisfied.
+
+13. Version Identification and Earlier Grants
+
+This text is the MatrixFreeSama Permissive License 2.0.
+
+A copy first distributed under MFSPL 2.0 remains governed by MFSPL 2.0 unless the Licensor expressly offers an additional license.
+
+MFSPL 2.0 does not retroactively add new obligations to a copy already licensed solely under MFSPL 1.0. An earlier recipient may elect to use a covered copy under MFSPL 2.0 if the Licensor offers MFSPL 2.0 for that copy and the recipient accepts it as recognized by applicable law.
+
+Human-readable short name: MFSPL 2.0
+SPDX custom reference: LicenseRef-MatrixFreeSama-Permissive-2.0
