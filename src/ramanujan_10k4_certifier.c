@@ -145,6 +145,13 @@ int main(int argc,char **argv){
     json_object_to_file_ext(json_out,root,JSON_C_TO_STRING_PRETTY);
     FILE *tf=fopen(txt_out,"wb");if(tf){fprintf(tf,"Ramanujan Simulator 10K^4 C Implicit Precision Certificate\n=======================================================\nStatus: %s\nDecimal pi materialized: NO\nPi used in core solve/certificate: NO\nElementary nested transforms: 32\nEffective modular power: 10000000000000000\nConservative -log10(|z_final|) lower bound: > 140000000000000000\nCertified implicit precision: > 139999999999999979 decimal digits\nComparison threshold: 314000000000000\nThreshold passed: %s\nExact Phi_2 q-series residual through q^120: %s\nExact Phi_5 q-series residual through q^120: %s\n",status?"PASS":"FAIL",target?"true":"false",q2?"true":"false",q5?"true":"false");fclose(tf);}
     printf("status: %s\nexact Phi2 q^120: %s\nexact Phi5 q^120: %s\ncertified implicit precision: 139999999999999979\nJSON %s\nTXT %s\n",status?"PASS":"FAIL",q2?"PASS":"FAIL",q5?"PASS":"FAIL",json_out,txt_out);
-    if (A) free(A); if (zlo) free(zlo); if (zhi) free(zhi);
-    json_object_put(root);rj_poly_clear(&zp2);rj_poly_clear(&zp5);rj_poly_clear(&phi2);rj_poly_clear(&phi5);return status ? 0 : 1;
+    if (A) free(A);
+    if (zlo) free(zlo);
+    if (zhi) free(zhi);
+    json_object_put(root);
+    rj_poly_clear(&zp2);
+    rj_poly_clear(&zp5);
+    rj_poly_clear(&phi2);
+    rj_poly_clear(&phi5);
+    return status ? 0 : 1;
 }
