@@ -1,140 +1,526 @@
 # RamanujanSimulator
 
-RamanujanSimulator is an experimental research implementation for extremely deep implicit precision in Ramanujan/Chudnovsky-family hypergeometric constructions.
+**RamanujanSimulator** is an experimental C17 research implementation for studying extremely deep *implicit precision* in Ramanujan/Chudnovsky-family hypergeometric constructions. The project separates two costs that are usually entangled: driving a mathematical state to a very deep convergence regime, and materializing an enormous explicit decimal representation of \(\pi\).
 
-The project separates two tasks that are usually coupled:
+The active implementation propagates a compact state
 
-1. **Implicit solve and certification**: propagate a compact mathematical state and certify an extremely small final convergence parameter without materializing the full decimal expansion of \(\pi\).
-2. **Optional explicit materialization**: a third party may replay the same constructive certificate at arbitrary precision and convert the result into a conventional decimal representation. The mathematical solve path does not need to be changed; only the representation/storage layer is added.
+\[
+S_k=(z_k,u_k,v_k)
+\]
 
-The current runtime has been ported from the original Python research prototype to **C17**.
+through a fixed nested sequence of modular transformations. The certifier does not write a giant decimal file. Instead, it emits a constructive certificate containing the seed, modular-polynomial data, branch rule, state-transport equations, transform sequence, and recovery contract. A separate materializer can replay the same mathematical path at a requested precision and convert the resulting state into an explicit representation.
 
-## Core idea
+This repository is research software. It does **not** present an implicit certificate as a conventional stored-decimal world record.
 
-The active branch starts from the exact CM/Chudnovsky seed
+> Research question: how far can the precision state be propagated and checked while the full decimal expansion remains unmaterialized, and can the resulting certificate still reconstruct explicit digits without changing the mathematical solve path?
 
-```text
-z0 = -1 / 53360^3
-```
+---
 
-and transports the state
+## Abstract
 
-```text
-(z, u, v)
-```
+High-precision computations of \(\pi\) normally couple convergence, arbitrary-precision arithmetic, representation, and storage. RamanujanSimulator investigates a different organization of the same mathematical object. It starts from an exact CM/Chudnovsky seed and repeatedly applies modular transformations of orders 2 and 5. Each transform drives the hypergeometric argument toward zero while transporting the coefficients that represent \(1/\pi\).
 
-through modular transformations of orders 2 and 5 while preserving the hypergeometric representation
+The current `10K^4` experiment uses
 
-```text
-1/pi = u F(z) + v theta(F)(z)
-```
+\[
+(2,2,2,2,5,5,5,5)^4,
+\]
+
+which contains 32 elementary transforms and has effective modular power
+
+\[
+10^{16}.
+\]
+
+Under the current validation model, the C17 certifier emits the research-build implicit-depth field
+
+\[
+139,999,999,999,999,979
+\]
+
+decimal digits while deliberately materializing no full decimal expansion of \(\pi\). The certificate is constructive rather than hash-only. A standalone C reference restorer can read it, replay the same state transport, evaluate the final hypergeometric observer, and emit explicit digits. A 1000-digit recovery smoke test is reproduced byte-for-byte.
+
+The project therefore studies **computation/representation decoupling**. It does not remove the information-theoretic cost of explicitly writing \(N\) digits. Instead, it asks whether convergence depth can be represented and checked by a much smaller state before any \(\Theta(N)\) output object is created.
+
+---
+
+## 1. Separation of concerns
+
+| Layer | Object | Responsibility |
+| --- | --- | --- |
+| Implicit solve | compact state \((z,u,v)\) | propagate the mathematical state |
+| Certification | constructive certificate | retain the recipe, validation metadata, and claimed depth |
+| Materialization | explicit representation of \(\pi\) | re-evaluate the certificate at requested precision and serialize it |
+
+The intended contract is
+
+\[
+\text{same seed}
+\rightarrow
+\text{same modular transforms}
+\rightarrow
+\text{same transported state}
+\rightarrow
+\text{optional observer/storage layer}.
+\]
+
+A third party may implement a different storage backend, distributed representation, checkpoint format, decimal serializer, or binary limb format. None of those changes are intended to modify the mathematical solver.
+
+---
+
+## 2. Hypergeometric state
+
+Define
+
+\[
+F(z)={}_3F_2\!\left(\frac16,\frac12,\frac56;1,1;z\right)
+=\sum_{n=0}^{\infty}c_nz^n,
+\]
 
 with
 
+\[
+c_n=\frac{(1/6)_n(1/2)_n(5/6)_n}{(n!)^3},
+\qquad
+\theta=z\frac{d}{dz}.
+\]
+
+The working representation is
+
+\[
+\frac1\pi=uF(z)+v\,\theta F(z).
+\]
+
+The implementation evaluates the hypergeometric coefficients using the recurrence
+
+\[
+c_{n+1}=c_n\frac{(6n+1)(2n+1)(6n+5)}{72(n+1)^3},
+\]
+
+so explicit recovery does not depend on Gamma-function evaluation.
+
+---
+
+## 3. Exact seed
+
+The active branch starts from
+
+\[
+z_0=-\frac1{53360^3}=-\frac1{151931373056000},
+\]
+
+and
+
+\[
+\alpha_0=\frac{77265280}{90856689}.
+\]
+
+With
+
+\[
+C_0=\frac{\sqrt{163}}6\sqrt{1-z_0},
+\]
+
+set
+
+\[
+u_0=C_0(1-\alpha_0),
+\qquad
+v_0=6C_0.
+\]
+
+The constructive certificate stores the exact rational/algebraic recipe for the seed rather than a decimal approximation.
+
+---
+
+## 4. Modular state transport
+
+For a modular step of order \(p\), let \(y\) be related to the current argument \(x\) by
+
+\[
+P_p(x,y)=0.
+\]
+
+The implementation works in the \(z\)-variable after the substitution
+
+\[
+J=\frac{1728}{z}
+\]
+
+into the corresponding modular polynomial. The active 10K\(^4\) certificate carries the complete integer coefficient tables for \(P_2\) and \(P_5\).
+
+On the selected small branch,
+
+\[
+y\sim\frac{x^p}{1728^{p-1}},
+\qquad x\rightarrow0.
+\]
+
+Implicit differentiation gives
+
+\[
+r=\frac{dy}{dx}=-\frac{P_x}{P_y},
+\]
+
+\[
+s=\frac{d^2y}{dx^2}
+=-\frac{P_{xx}+2P_{xy}r+P_{yy}r^2}{P_y}.
+\]
+
+The transport factors are
+
+\[
+M_p=\frac1p\frac{x}{y}r\sqrt{\frac{1-x}{1-y}},
+\]
+
+\[
+L_p=1-\frac{xr}{y}+\frac{xs}{r}-\frac{x}{2(1-x)}+\frac{xr}{2(1-y)}.
+\]
+
+The state update is
+
+\[
+u'=\frac{u-vL_p}{M_p},
+\qquad
+v'=v\frac{xr}{yM_p}.
+\]
+
+Only the current and next states are required by the implementation. An expanding history of previous numerical states is not retained.
+
+---
+
+## 5. The 10K\(^4\) construction
+
+One macro block is
+
+\[
+(2,2,2,2,5,5,5,5),
+\]
+
+whose product is
+
+\[
+2^4 5^4=10^4.
+\]
+
+Repeating the block four times gives
+
+\[
+(2,2,2,2,5,5,5,5)^4
+\]
+
+with 32 elementary transforms and effective modular power
+
+\[
+(10^4)^4=10^{16}.
+\]
+
+For a sufficiently small modular parameter the selected branch behaves schematically as
+
+\[
+z_{k+1}=O(z_k^{p_k}).
+\]
+
+Thus the logarithmic convergence depth scales multiplicatively with the product of the modular orders. The current certifier records the conservative lower bound
+
+\[
+-\log_{10}|z_{32}|>140,000,000,000,000,000,
+\]
+
+then applies a 21-digit prefactor safety margin and writes
+
+\[
+N_{\mathrm{claim}}=139,999,999,999,999,979.
+\]
+
+This value must be interpreted together with the validation scope below. It is a research-build certificate field, not a claim that this many decimal digits have been explicitly generated and stored.
+
+---
+
+## 6. Constructive certificate
+
+A useful certificate cannot be only
+
 ```text
-F(z) = 3F2(1/6, 1/2, 5/6; 1, 1; z).
+PASS
+precision = ...
+hash = ...
 ```
 
-The current 10K^4 experiment uses the 32-step sequence
+because a one-way digest cannot reconstruct the mathematical state. The generated JSON instead contains the data needed for an independent materializer:
 
-```text
-(2, 2, 2, 2, 5, 5, 5, 5)^4
-```
+- exact seed construction;
+- the complete 32-step transform sequence;
+- full integer coefficient tables for \(P_2\) and \(P_5\);
+- the small-branch selection rule;
+- the state-transport equations;
+- the hypergeometric coefficient recurrence;
+- the observer relation \(\pi=1/(uF+v\theta F)\);
+- current validation metadata and the implicit-depth claim.
 
-whose effective modular power is
+The intended semantics are
 
-```text
-10^16
-```
+\[
+\boxed{
+\text{certificate}
+\rightarrow
+\text{replay the same mathematical path}
+\rightarrow
+\text{explicit observer}
+\rightarrow
+\text{chosen representation}
+}
+\]
 
-The certifier does **not** write a giant decimal file. It records the exact seed, transformation sequence, modular-polynomial data, branch rule, state-transport equations, and recovery contract in a constructive certificate.
+The official implicit path may discard transient high-precision numerical state after verification while retaining the construction needed to reproduce it.
 
-## Constructive certificate
+---
 
-The certificate is intended to be more than a hash or a precision claim. It contains enough mathematical information for an independent implementation to reconstruct the same state trajectory and then materialize an explicit value if desired.
+## 7. Explicit recovery
 
-Conceptually:
+`ramanujan_certificate_restore.c` is deliberately separate from the certifier. Given a constructive certificate and requested precision, it:
 
-```text
-seed
-  -> nested modular state transport
-  -> implicit certified state
-  -> constructive certificate
-  -> optional third-party materializer
-  -> explicit decimal pi
-```
+1. reconstructs \(z_0,u_0,v_0\);
+2. reads the embedded \(P_2\) and \(P_5\) tables;
+3. replays the transform sequence from the certificate;
+4. evaluates \(F(z)\) and \(\theta F(z)\);
+5. forms \(R=uF+v\theta F\);
+6. evaluates \(\pi=1/R\);
+7. serializes the requested explicit digits.
 
-The official implicit path stops after certification and may discard transient high-precision numerical state. Decimal serialization, distributed storage, checkpointing, and large-scale I/O are deliberately outside the solver core.
+The reference restorer is not meant to dictate how very large output must be stored. A large-scale implementation may replace the final storage and conversion layer with streaming decimal blocks, binary limbs, RNS reconstruction, distributed files, or another representation while preserving the solve path.
 
-## C17 implementation
+If \(N\) decimal digits are actually written, output still has an unavoidable \(\Omega(N)\) information cost. RamanujanSimulator does not claim otherwise.
 
-The C port is organized around the following components:
+---
 
-| Component | Purpose |
-| --- | --- |
-| `ramanujan_nested_core.c` | Runtime generation of modular relations and nested state transport |
-| `ramanujan_10k4_certifier.c` | 10K^4 implicit-depth checks and constructive certificate generation |
-| `ramanujan_certificate_restore.c` | Reference explicit recovery from a constructive certificate |
-| `ramanujan_d100_evaluator.c` | Legacy D100/class-number experiment |
-| `ramanujan_c_common.c/.h` | Shared GMP exact arithmetic, modular-polynomial generation, state transport, hypergeometric evaluation |
+## 8. C17 implementation
 
-Dependencies:
-
-```text
-C17 compiler
-GMP
-json-c     # certifier/restorer only
-```
+The active runtime is C17. GMP provides exact integer/rational primitives and arbitrary-precision floating evaluation. `json-c` is used by the certificate writer and reader.
 
 No Python, SymPy, or mpmath is required by the C runtime.
 
-## Build
+Current source components:
+
+| File | Purpose |
+| --- | --- |
+| `src/ramanujan_c_common.c` | shared exact arithmetic, modular-polynomial generation, state transport, hypergeometric evaluation |
+| `src/ramanujan_c_common.h` | public structures and shared function declarations |
+| `src/ramanujan_nested_core.c` | modular-generation and nested-convergence diagnostics |
+| `src/ramanujan_10k4_certifier.c` | 10K\(^4\) certifier and constructive JSON writer |
+| `src/ramanujan_certificate_restore.c` | certificate-to-explicit-\(\pi\) reference materializer |
+
+The C port is CPU-oriented. The repository currently contains no CUDA or distributed-HPC implementation.
+
+---
+
+## 9. Validation model
+
+The repository distinguishes finite exact checks, numerical diagnostics, constructive recovery, and theorem-level proof.
+
+### 9.1 Modular-polynomial checks
+
+The C implementation can generate relevant modular polynomials from exact q-series arithmetic using GMP rationals. During the C port, generated \(\Phi_2\), \(\Phi_3\), and \(\Phi_5\) were compared term-for-term with the exact reference tables.
+
+The 10K\(^4\) certifier also evaluates exact rational residuals of
+
+\[
+\Phi_p(j(q),j(q^p))
+\]
+
+through \(q^{120}\) for \(p=2\) and \(p=5\). The current validation snapshot reports zero residual in both tested finite ranges.
+
+A finite q-series check is implementation evidence. It is not, by itself, an infinite-order symbolic proof.
+
+### 9.2 Small-branch and depth checks
+
+The certifier constructs rational envelope bounds in a small-q region and checks the contraction assumptions used by the conservative depth estimate. The core certificate path does not use stored decimal digits of \(\pi\) as its source of the claimed convergence depth.
+
+### 9.3 Numerical diagnostics
+
+A separate finite-precision diagnostic propagates the 32 states and records selected values of
+
+\[
+-\log_{10}|z_k|.
+\]
+
+These diagnostic values are not the sole basis of the conservative depth field written to the certificate.
+
+### 9.4 Constructive recovery smoke test
+
+The C certificate was used to reconstruct 1000 digits after the decimal point. The explicit output SHA-256 is
+
+```text
+e898fea26734a6d3af5396b9f4c60ae5dcc88fc40944d835911a9ee8a672ea1b
+```
+
+and matched the earlier Python reference output byte-for-byte.
+
+This demonstrates that the certificate is constructive and that explicit recovery is operational at the tested precision. It does **not** independently prove the entire \(10^{17}\)-scale implicit-depth claim.
+
+### 9.5 Formal-proof boundary
+
+The repository is not currently a Lean, Coq, Isabelle, or other proof-assistant formalization. Independent mathematical review remains appropriate for the global transform identities, branch semantics, prefactor/error propagation, and interpretation of the final implicit-depth field.
+
+---
+
+## 10. Reproducibility
+
+### Dependencies on Debian/Ubuntu
+
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential pkg-config libgmp-dev libjson-c-dev
+```
+
+### Build
 
 ```bash
 make
 ```
 
-For a more portable build without `-march=native`:
+The default build enables `-O3 -march=native`. For a portable build:
 
 ```bash
 make clean
 make NATIVE=0
 ```
 
-Typical commands:
+### Run the nested-core diagnostics
 
 ```bash
-./ramanujan_core
-./ramanujan_certifier
-./ramanujan_restore Ramanujan_10K4_Implicit_Certificate_C.json --digits 1000 --guard 140 --output pi1000.txt
+make core
 ```
 
-## Current validation snapshot
+### Generate a fresh constructive certificate
 
-In the current research build:
-
-```text
-10K^4 elementary transforms: 32
-effective modular power:      10^16
-decimal pi materialized by certifier: NO
+```bash
+make certify
 ```
 
-The C port reproduced the existing 1000-digit explicit recovery test byte-for-byte against the Python reference implementation.
+### Restore 1000 explicit digits
 
-Representative measurements from one cloud environment showed a substantial reduction in runtime and memory after the C17 port. These measurements are implementation diagnostics, not portable performance guarantees.
+```bash
+make restore1000
+```
 
-## What the precision claim means
+### End-to-end smoke test
 
-An implicit precision claim is **not** the same thing as a conventional record consisting of a stored decimal expansion of \(\pi\).
+```bash
+make smoke
+```
 
-The project studies how far the convergence state can be propagated and certified while leaving the enormous decimal representation unmaterialized. If an explicit expansion is requested, the output itself still has unavoidable large-scale arithmetic, conversion, storage, and I/O costs.
+The smoke test generates a fresh certificate, restores 1000 digits, hashes the output, and compares it with the recorded reference hash. A GitHub Actions workflow performs the portable C17 build and smoke test on pushes and pull requests.
 
-Accordingly, this repository should not describe an implicit certificate as a conventional decimal-digit world record unless the corresponding explicit result has actually been generated and independently accepted under the relevant record rules.
+---
 
-## Research status
+## 11. Representative C-port measurements
 
-This is experimental numerical/mathematical research software. The current certifier combines exact rational checks, generated modular relations, constructive recovery data, and numerical diagnostics. Independent mathematical review is welcome, especially for the modular-transform identities, branch selection, error bounds, and certificate semantics.
+These measurements were obtained in one cloud environment during the port. They are diagnostics, not portable performance guarantees.
 
-## License
+| Workload | Python prototype | C17 port |
+| --- | ---: | ---: |
+| Nested modular core | 2.06 s, ~148948 KB RSS | 0.09 s, ~3608 KB RSS |
+| 10K\(^4\) certifier | 2.35 s, ~148664 KB RSS | 0.14 s, ~3904 KB RSS |
+| 1000-digit certificate restore | 0.82 s, ~114664 KB RSS | 0.27 s, ~2504 KB RSS |
 
-A license file should be added before treating the repository as a finalized public release.
+The C17 source in this repository also builds warning-free with the supplied `-Wall -Wextra -Wpedantic` configuration in the current cloud toolchain.
+
+These timings must not be interpreted as the cost of materializing \(10^{17}\) digits. Huge explicit materialization enters a different regime dominated by multiprecision arithmetic, base conversion, memory traffic, and storage I/O.
+
+---
+
+## 12. Bottleneck inversion
+
+The project is motivated by a representation question. If a computation insists on maintaining an explicit \(N\)-digit object throughout the solve, representational cost becomes entangled with convergence. The nested-state approach instead preserves the mathematical object through a compact generative state and postpones large-scale materialization until observation is requested.
+
+The resulting engineering transition is
+
+\[
+\text{convergence bottleneck}
+\longrightarrow
+\text{materialization and storage bottleneck}.
+\]
+
+This is not a claim that information disappears. It is a claim about *when* the large representation is created and *which layer* is responsible for it.
+
+---
+
+## 13. Claim boundary
+
+### This repository does claim
+
+- a concrete C17 implementation of the stated nested modular state transport;
+- a 32-step 10K\(^4\) transform sequence with effective modular power \(10^{16}\);
+- exact rational finite q-series checks used by the current certifier;
+- a constructive certificate format containing the recovery recipe rather than only a hash;
+- a separate C materializer that can recover explicit digits from the certificate;
+- a reproduced 1000-digit explicit-recovery smoke test;
+- the current research-build implicit-depth field exactly as emitted by the certifier.
+
+### This repository does not claim
+
+- that the current implicit-depth field is already a formally verified theorem;
+- that 139,999,999,999,999,979 decimal digits have been explicitly generated and stored;
+- that an implicit certificate is equivalent to a conventional \(\pi\) digit world record;
+- that explicit materialization at hundreds of trillions of digits takes the same time as the compact certifier;
+- that the current branch has undergone independent peer review.
+
+This separation is intentional. The purpose is to make the experiment inspectable without inflating a convergence-scale number into a claim about an output artifact that was never produced.
+
+---
+
+## 14. Independent verification targets
+
+An external reviewer can attack the construction without trusting the executable by independently regenerating \(\Phi_2\) and \(\Phi_5\), checking the conversion to the \(z\)-space polynomials, deriving the \(M_p\) and \(L_p\) transport equations, verifying the small branch over all 32 transforms, replacing finite q-series checks with symbolic arguments, deriving a rigorous global prefactor/error enclosure, and implementing an independent certificate materializer.
+
+The certificate format is deliberately intended to expose enough information for such work.
+
+---
+
+## 15. Design principle
+
+The software rule behind the project is
+
+\[
+\boxed{
+\text{the numerical representation is an observation of the state, not the state authority itself}
+}
+\]
+
+The official implicit path therefore ends at a constructive certificate. Explicit decimal output is optional and replaceable. This is the sense in which the project uses an implicit, matrix-free-style representation: a very large representational object is not materialized merely because it can eventually be reconstructed.
+
+---
+
+## 16. Research status
+
+**Status: experimental.**
+
+The repository is intended for reproduction, code review, numerical experimentation, and independent mathematical checking. The active C17 mainline contains only the components required for the 10K\(^4\) construction, certificate generation, and explicit recovery path.
+
+No software license has yet been selected. Until a license is added, normal copyright restrictions apply to reuse and redistribution.
+
+---
+
+## Minimal end-to-end experiment
+
+```bash
+make NATIVE=0
+make certify
+make restore1000
+make smoke
+```
+
+The experiment demonstrates the repository's core architecture:
+
+\[
+\boxed{
+\text{compact implicit solve}
+\rightarrow
+\text{constructive certificate}
+\rightarrow
+\text{optional explicit recovery}
+}
+\]
+
+with the mathematical solve path preserved between the implicit and explicit modes.
