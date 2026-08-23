@@ -1,0 +1,75 @@
+{
+  "project":"Ramanujan Simulator implicit-state certification",
+  "implementation":"C17 + GMP; same 10K^4 mathematics",
+  "mode":"10K^4 nested, decimal materialization disabled",
+  "pi_used_in_core":false,
+  "sequence":[2,2,2,2,5,5,5,5,2,2,2,2,5,5,5,5,2,2,2,2,5,5,5,5,2,2,2,2,5,5,5,5],
+  "elementary_layers":32,
+  "effective_modular_power":"10000000000000000",
+  "seed":{"z0":"-1/151931373056000","exact_seed_depth_gt_digits":14,"pass":true},
+  "modular_polynomials":{
+    "phi2_sha256":"6ee0b21d1e5bb91808a08ae61894c18406f484fc7aec665ced44bc529b15da9b",
+    "phi5_sha256":"fa3eed8a95a62f09a6b318ed286e2fe75e15a7515af22899adfa915ac10a071c",
+    "exact_q_series_checks":{
+      "2":{"range":[-14,120],"pass":true,"nonzero_count":0},
+      "5":{"range":[-41,120],"pass":true,"nonzero_count":0}
+    }
+  },
+  "small_branch_contraction":{
+    "q_to_z_rational_envelope":{
+      "rho":"1e-16",
+      "E4_deviation_bound":"266666666666666773333333333333336000000000000000000000000000000000/11111111111111105555555555555556666666666666666555555555555555561111111111111111",
+      "z_over_q_lower":"63999999999999692800000000000706559999999998963712000000001088102399999999129518080000000551305215999999716471603200000120499568639999957155708928000012853287321599996728254136320000708878270463999869130165452800020565259714559997257965371392000308478895718399970966692167680002258146164735999857380242227200007130987888639999728343318528000007408818585599999871150981120000001073741824/37037037037039614814814814874917037037037513122074074074224982762962962863152820740740726589645777777788748271911111110357322707777777384693671703703804249106281481471214201783703704143008977629629633265285985185184261484376296296307858750222222223095730188888888880305502222222221691447259259259256072503703703703746039259259259259584296296296296294651851851851851842962962962962963",
+      "z_over_q_upper":"37037037037036892592592592592867037037037036698555555555555860188888888888675645555555555676393444444444387478011111111133897684444444436595735851851854206464429629629008868131851851996696201333333303250276133333338920186813333332402191086666666806338003666666647769956366666668976264592222221966950872555555581082690522222219912624296666666855633769666666652699532966666667597808913333333277464798533333336341639053333333188488983851851858059466829629629394168371851851859700560444444444216578711111111116807754444444444323606555555555557687988888888888858425555555555555894037037037037034292592592592592607037037037037037/21433470507542903377914952034809885116597594204239540467846856355024003272093104638205030880404942557198385607469564740077741612440080451131956854304658432649029116734752116518122436978928409613278486617480675421477230198822816093704342370475606117915309739750957202723548160649667600475494320688805548248418704465490201948907016883191472642169777478818006885783620280754036262209670878631749127040888439415765968935591049621469234999989576281336620208285361788312353388294454430743802999484224965657497459533607674898333111659808033054236795610424171452632318244175836220400548696806372749519890260728091742112482852864",
+      "pass":true
+    },
+    "pi_free_seed_q_bound_pass":true,
+    "all_checks_pass":true
+  },
+  "conservative_depth_lower_bound_digits":"140000000000000000",
+  "prefactor_safety_margin_digits":21,
+  "certified_implicit_precision_digits":"139999999999999979",
+  "comparison_target_digits":"314000000000000",
+  "beats_target":true,
+  "numeric_diagnostic_not_used_for_certificate":{
+    "minus_log10_abs_z_final":"174191912008683530.453",
+    "records":[
+      {"layer":1,"p":2,"effective_power":"2","minus_log10_abs_z":"31.6008386635938323"},
+      {"layer":4,"p":2,"effective_power":"16","minus_log10_abs_z":"275.469515475750779"},
+      {"layer":8,"p":5,"effective_power":"10000","minus_log10_abs_z":"174188.674464945391"},
+      {"layer":16,"p":5,"effective_power":"100000000","minus_log10_abs_z":"1741919116.8492916"},
+      {"layer":24,"p":5,"effective_power":"1000000000000","minus_log10_abs_z":"17419191200865.1158"},
+      {"layer":32,"p":5,"effective_power":"10000000000000000","minus_log10_abs_z":"174191912008683530"}
+    ]
+  },
+  "decimal_pi_materialized":false,
+  "final_state_policy":"verify then discard; retain seed/transform/certificate only",
+  "status":"PASS",
+  "schema_version":"constructive-certificate-c-v1",
+  "constructive_recovery":{
+    "contract_version":"C-1.0",
+    "purpose":"Self-contained constructive certificate; third parties may materialize explicit pi without changing the mathematical solve path.",
+    "solver_core_must_remain_unchanged":true,
+    "exact_seed":{
+      "z0":{"numerator":"-1","denominator":"151931373056000"},
+      "alpha0":{"numerator":"77265280","denominator":"90856689"},
+      "C0":"sqrt(163)/6 * sqrt(1-z0)",
+      "u0":"C0 * (1-alpha0)",
+      "v0":"6*C0",
+      "sqrt_branch":"principal positive real square root on the real seed/continuation branch"
+    },
+    "transform_sequence":[2,2,2,2,5,5,5,5,2,2,2,2,5,5,5,5,2,2,2,2,5,5,5,5,2,2,2,2,5,5,5,5],
+    "modular_z_polynomials":{
+      "2":{"p":2,"degree_x":3,"degree_y":3,"terms":[
+        {"x_pow":3,"y_pow":3,"coeff":"-1953125"},{"x_pow":3,"y_pow":2,"coeff":"187500"},{"x_pow":3,"y_pow":1,"coeff":"-6000"},{"x_pow":3,"y_pow":0,"coeff":"64"},{"x_pow":2,"y_pow":3,"coeff":"187500"},{"x_pow":2,"y_pow":2,"coeff":"1510125"},{"x_pow":2,"y_pow":1,"coeff":"95232"},{"x_pow":1,"y_pow":3,"coeff":"-6000"},{"x_pow":1,"y_pow":2,"coeff":"95232"},{"x_pow":1,"y_pow":1,"coeff":"-110592"},{"x_pow":0,"y_pow":3,"coeff":"64"}]},
+      "5":{"p":5,"degree_x":6,"degree_y":6,"terms":[
+        {"x_pow":6,"y_pow":6,"coeff":"5309626171273360722362368000"},{"x_pow":6,"y_pow":5,"coeff":"3457795560648760910413824000"},{"x_pow":6,"y_pow":4,"coeff":"750608416927050074633011200"},{"x_pow":6,"y_pow":3,"coeff":"54313315434020926285414400"},{"x_pow":6,"y_pow":2,"coeff":"430254526762844160"},{"x_pow":6,"y_pow":1,"coeff":"1136117760"},{"x_pow":6,"y_pow":0,"coeff":"1"},{"x_pow":5,"y_pow":6,"coeff":"3457795560648760910413824000"},{"x_pow":5,"y_pow":5,"coeff":"-29617595563122405481849552896"},{"x_pow":5,"y_pow":4,"coeff":"7084552847250663218872320000"},{"x_pow":5,"y_pow":3,"coeff":"-64453772899964735127552000"},{"x_pow":5,"y_pow":2,"coeff":"74387615108118528000"},{"x_pow":5,"y_pow":1,"coeff":"-246683410950"},{"x_pow":4,"y_pow":6,"coeff":"750608416927050074633011200"},{"x_pow":4,"y_pow":5,"coeff":"7084552847250663218872320000"},{"x_pow":4,"y_pow":4,"coeff":"1711644060233550509015040000"},{"x_pow":4,"y_pow":3,"coeff":"15566255126377738181376000"},{"x_pow":4,"y_pow":2,"coeff":"383083609779811215375"},{"x_pow":4,"y_pow":1,"coeff":"3505336473600"},{"x_pow":3,"y_pow":6,"coeff":"54313315434020926285414400"},{"x_pow":3,"y_pow":5,"coeff":"-64453772899964735127552000"},{"x_pow":3,"y_pow":4,"coeff":"15566255126377738181376000"},{"x_pow":3,"y_pow":3,"coeff":"-441206965512914835246100"},{"x_pow":3,"y_pow":2,"coeff":"186414787904261990400"},{"x_pow":3,"y_pow":1,"coeff":"-13589034024960"},{"x_pow":2,"y_pow":6,"coeff":"430254526762844160"},{"x_pow":2,"y_pow":5,"coeff":"74387615108118528000"},{"x_pow":2,"y_pow":4,"coeff":"383083609779811215375"},{"x_pow":2,"y_pow":3,"coeff":"186414787904261990400"},{"x_pow":2,"y_pow":2,"coeff":"4974647446705766400"},{"x_pow":2,"y_pow":1,"coeff":"19194382909440"},{"x_pow":1,"y_pow":6,"coeff":"1136117760"},{"x_pow":1,"y_pow":5,"coeff":"-246683410950"},{"x_pow":1,"y_pow":4,"coeff":"3505336473600"},{"x_pow":1,"y_pow":3,"coeff":"-13589034024960"},{"x_pow":1,"y_pow":2,"coeff":"19194382909440"},{"x_pow":1,"y_pow":1,"coeff":"-8916100448256"},{"x_pow":0,"y_pow":6,"coeff":"1"}]}
+    },
+    "branch_rule":{"initial_guess":"y = x^p / 1728^(p-1)","selection":"select the root continuously connected to the small-q branch y ~ x^p/1728^(p-1) as x -> 0","newton_refinement_is_representation_only":true},
+    "state_transport":{"P":"P_p(x,y)=0","r":"dy/dx = -P_x/P_y","s":"d2y/dx2 = -(P_xx + 2*P_xy*r + P_yy*r^2)/P_y","M":"(1/p)*(x/y)*r*sqrt((1-x)/(1-y))","L":"1 - x*r/y + x*s/r - x/(2*(1-x)) + x*r/(2*(1-y))","u_next":"(u-v*L)/M","v_next":"v*(x*r)/(y*M)"},
+    "hypergeometric_observer":{"F":"sum_{n>=0} c_n z^n","thetaF":"sum_{n>=0} n*c_n z^n","c0":"1","coefficient_recurrence":"c_(n+1)=c_n*((6n+1)*(2n+1)*(6n+5))/(72*(n+1)^3)","inverse_pi":"R = u*F(z) + v*thetaF(z)","pi":"1/R"},
+    "materialization_protocol":{"input":"certificate plus requested explicit precision N","core_math_changes_required":false,"storage_layer":"third party supplied; decimal/binary/streaming format is outside the solver"},
+    "claimed_implicit_precision_digits":"139999999999999979",
+    "decimal_materialization_in_official_certificate":false
+  }
+}
