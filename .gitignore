@@ -1,0 +1,7 @@
+build/
+*.o
+*.out
+pi*.txt
+Ramanujan_10K4_Implicit_Certificate_C.json
+Ramanujan_10K4_Implicit_Certificate_C.txt
+.DS_Store
