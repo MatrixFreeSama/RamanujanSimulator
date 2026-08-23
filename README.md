@@ -514,7 +514,7 @@ SPDX custom reference:
 LicenseRef-MatrixFreeSama-Permissive-2.0
 ```
 
-The license text is the same MFSPL 2.0 text used by the author's earlier TensorCube repository.
+The license text is MFSPL 2.0.
 
 ---
 
