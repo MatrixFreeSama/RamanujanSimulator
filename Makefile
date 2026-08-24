@@ -22,9 +22,10 @@ CERT := $(BUILD)/Ramanujan_10K4_Implicit_Certificate_C.json
 CERT_TXT := $(BUILD)/Ramanujan_10K4_Implicit_Certificate_C.txt
 PI1000 := $(BUILD)/pi1000.txt
 PI1000_EXPLICIT := $(BUILD)/pi1000_explicit.txt
+PI1000_TRACE := $(BUILD)/pi1000_newton_trace.txt
 EXPECTED_SHA256 := e898fea26734a6d3af5396b9f4c60ae5dcc88fc40944d835911a9ee8a672ea1b
 
-.PHONY: all clean core certify restore1000 explicit1000 smoke
+.PHONY: all clean core certify restore1000 explicit1000 trace1000 smoke
 
 all: $(BUILD)/ramanujan_core $(BUILD)/ramanujan_certifier $(BUILD)/ramanujan_restore $(BUILD)/ramanujan_explicit_pi
 
@@ -54,6 +55,9 @@ restore1000: certify $(BUILD)/ramanujan_restore
 
 explicit1000: $(BUILD)/ramanujan_explicit_pi
 	$(BUILD)/ramanujan_explicit_pi --digits 1000 --guard 120 --output $(PI1000_EXPLICIT) --quiet
+
+trace1000: certify $(BUILD)/ramanujan_restore
+	$(BUILD)/ramanujan_restore $(CERT) --digits 1000 --guard 140 --output $(PI1000_TRACE) --trace-newton
 
 smoke: restore1000 explicit1000
 	@restored=$$(sha256sum $(PI1000) | awk '{print $$1}'); \
