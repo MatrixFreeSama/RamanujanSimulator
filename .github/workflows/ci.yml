@@ -17,3 +17,5 @@ jobs:
         run: make NATIVE=0 smoke
       - name: Exercise Newton precision-doubling trace
         run: make NATIVE=0 trace1000
+      - name: Benchmark modular dimension sweet spot
+        run: make NATIVE=0 dimensionbench
