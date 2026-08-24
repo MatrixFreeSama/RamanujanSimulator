@@ -15,8 +15,12 @@ jobs:
       - name: Build candidates
         run: |
           mkdir -p build
+          awk '/^int main\(int argc, char \*\*argv\)/ {exit} {print}' \
+            validation/benchmark_d2_physical_collapse.c \
+            > build/benchmark_d2_physical_collapse.c
+          cp validation/benchmark_d2_physical_collapse_2lane.c build/
           gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic -fopenmp \
-            -Isrc -Ivalidation validation/benchmark_d2_physical_collapse_2lane.c \
+            -Isrc -Ibuild -Ivalidation build/benchmark_d2_physical_collapse_2lane.c \
             src/ramanujan_c_common.c -lgmp -lm \
             -o build/benchmark_d2_physical_collapse_2lane
           gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic -fopenmp \
