@@ -25,7 +25,7 @@ PI1000_EXPLICIT := $(BUILD)/pi1000_explicit.txt
 PI1000_TRACE := $(BUILD)/pi1000_newton_trace.txt
 EXPECTED_SHA256 := e898fea26734a6d3af5396b9f4c60ae5dcc88fc40944d835911a9ee8a672ea1b
 
-.PHONY: all clean core certify restore1000 explicit1000 trace1000 dimensionbench loworderbench d2basicbench d2classicbench d2bsbench smoke
+.PHONY: all clean core certify restore1000 explicit1000 trace1000 dimensionbench loworderbench d2basicbench d2classicbench d2bsbench d2parallelbench smoke
 
 all: $(BUILD)/ramanujan_core $(BUILD)/ramanujan_certifier $(BUILD)/ramanujan_restore $(BUILD)/ramanujan_explicit_pi
 
@@ -58,6 +58,9 @@ $(BUILD)/ramanujan_d2_classic_bench: validation/benchmark_d2_vs_agm_borwein.c va
 
 $(BUILD)/ramanujan_d2_bs_bench: validation/benchmark_d2_bs_vs_classics.c validation/benchmark_original_d2_basic_vs_chud.c $(COMMON) $(HDR) | $(BUILD)
 	$(CC) $(CFLAGS) -I$(SRC) -Ivalidation validation/benchmark_d2_bs_vs_classics.c $(COMMON) $(LDLIBS_COMMON) -o $@
+
+$(BUILD)/ramanujan_d2_parallel_bench: validation/benchmark_d2_parallel_lanes.c validation/benchmark_original_d2_basic_vs_chud.c $(COMMON) $(HDR) | $(BUILD)
+	$(CC) $(CFLAGS) -fopenmp -I$(SRC) -Ivalidation validation/benchmark_d2_parallel_lanes.c $(COMMON) $(LDLIBS_COMMON) -o $@
 
 $(BUILD)/ramanujan_agm_borwein_only_bench: validation/benchmark_agm_borwein_only.c validation/benchmark_original_d2_basic_vs_chud.c $(COMMON) $(HDR) | $(BUILD)
 	$(CC) $(CFLAGS) -I$(SRC) -Ivalidation validation/benchmark_agm_borwein_only.c $(COMMON) $(LDLIBS_COMMON) -o $@
@@ -92,6 +95,9 @@ d2classicbench: $(BUILD)/ramanujan_d2_classic_bench
 d2bsbench: $(BUILD)/ramanujan_d2_bs_bench $(BUILD)/ramanujan_agm_borwein_only_bench
 	$(BUILD)/ramanujan_d2_bs_bench 1000 10000 30000 100000 200000 300000 1000000
 	$(BUILD)/ramanujan_agm_borwein_only_bench 1000 10000 30000 100000 200000 300000 1000000
+
+d2parallelbench: $(BUILD)/ramanujan_d2_parallel_bench
+	OMP_NUM_THREADS=2 OMP_DYNAMIC=false OMP_PROC_BIND=true OMP_PLACES=cores D2_PARALLEL_THRESHOLD_BITS=4096 $(BUILD)/ramanujan_d2_parallel_bench 100000 300000 1000000
 
 smoke: restore1000 explicit1000
 	@restored=$$(sha256sum $(PI1000) | awk '{print $$1}'); \
