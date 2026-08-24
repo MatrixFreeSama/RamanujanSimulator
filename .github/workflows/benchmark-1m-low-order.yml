@@ -12,18 +12,46 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential libgmp-dev
-      - name: Build benchmark
+      - name: Build guarded benchmark
         run: |
           mkdir -p build
+          python3 - <<'PY'
+          from pathlib import Path
+          src = Path('validation/benchmark_low_order_explicit_vs_chud.c').read_text()
+          src = src.replace('const uint64_t guard = 160;', 'const uint64_t guard = 320;')
+          src = src.replace('rj_transform_step(&poly, p, 14, cur, nxt)',
+                            'rj_transform_step(&poly, p, 20, cur, nxt)')
+          Path('build/benchmark_1m_guarded.c').write_text(src)
+          PY
           gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic \
-            -Isrc validation/benchmark_low_order_explicit_vs_chud.c \
+            -Isrc build/benchmark_1m_guarded.c \
             src/ramanujan_c_common.c -lgmp -lm \
-            -o build/benchmark_low_order_explicit_vs_chud
-      - name: Run 100k 300k 1M benchmark
+            -o build/benchmark_1m_guarded
+      - name: Run guarded 1M benchmark and diagnose equality
+        shell: bash
         run: |
-          build/benchmark_low_order_explicit_vs_chud 100000 300000 1000000 | tee build/low_order_1m.csv
-      - name: Upload benchmark table
+          set +e
+          set -o pipefail
+          build/benchmark_1m_guarded 1000000 | tee build/low_order_1m_guarded.csv
+          rc=${PIPESTATUS[0]}
+          python3 - <<'PY' | tee build/low_order_1m_prefix.txt
+          from pathlib import Path
+          ref = Path('build/bench_chud_1000000.txt').read_bytes()
+          for label in ('p2','p3'):
+              data = Path(f'build/bench_{label}_1000000.txt').read_bytes()
+              n = min(len(ref), len(data))
+              first = next((i for i in range(n) if ref[i] != data[i]), n)
+              if first == n and len(ref) == len(data):
+                  print(f'{label}: byte-identical; common_prefix_bytes={n}')
+              else:
+                  print(f'{label}: first_mismatch_byte={first}; common_prefix_bytes={first}; ref_len={len(ref)}; test_len={len(data)}')
+          PY
+          exit $rc
+      - name: Upload benchmark diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: low-order-1m
-          path: build/low_order_1m.csv
+          name: low-order-1m-guarded
+          path: |
+            build/low_order_1m_guarded.csv
+            build/low_order_1m_prefix.txt
