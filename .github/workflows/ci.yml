@@ -15,3 +15,5 @@ jobs:
         run: make NATIVE=0
       - name: Verify certificate restore and original explicit seed output
         run: make NATIVE=0 smoke
+      - name: Exercise Newton precision-doubling trace
+        run: make NATIVE=0 trace1000
