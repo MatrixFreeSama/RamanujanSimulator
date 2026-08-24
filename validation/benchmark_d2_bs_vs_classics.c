@@ -14,9 +14,13 @@
  *   z = (Z0 + Z1*omega)/ZD
  *   beta = 1-alpha = (B0 + B1*omega)/BD
  *
- * with the small exact coefficients below.  This keeps the same binary-
+ * with the small exact coefficients below. This keeps the same binary-
  * splitting/product-tree skeleton as Chudnovsky while avoiding the large
  * H1/H2 coefficients in every quadratic-ring multiplication.
+ *
+ * The product-tree scratch integers are allocated once per complete solve and
+ * reused at every leaf/merge. This removes a large number of GMP init/clear
+ * calls without changing the arithmetic or the tree topology.
  */
 
 static const char *D2_Z0 = "-59818419102592333";
@@ -37,6 +41,19 @@ typedef struct {
     d2_ring_t p;
     d2_ring_t w;
 } d2_seg_t;
+
+typedef struct {
+    mpz_t num;
+    mpz_t den;
+    mpz_t g;
+    mpz_t weight0;
+    mpz_t m0;
+    mpz_t m1;
+    mpz_t m2;
+    mpz_t t0;
+    mpz_t t1;
+    d2_ring_t rw;
+} d2_ws_t;
 
 static void d2_ring_init(d2_ring_t *r) {
     mpz_init(r->a);
@@ -60,6 +77,18 @@ static void d2_seg_clear(d2_seg_t *s) {
     d2_ring_clear(&s->w);
 }
 
+static void d2_ws_init(d2_ws_t *ws) {
+    mpz_inits(ws->num, ws->den, ws->g, ws->weight0,
+              ws->m0, ws->m1, ws->m2, ws->t0, ws->t1, NULL);
+    d2_ring_init(&ws->rw);
+}
+
+static void d2_ws_clear(d2_ws_t *ws) {
+    d2_ring_clear(&ws->rw);
+    mpz_clears(ws->num, ws->den, ws->g, ws->weight0,
+               ws->m0, ws->m1, ws->m2, ws->t0, ws->t1, NULL);
+}
+
 /*
  * (a+b*w)(c+d*w), w^2=w+15.
  * m0=ac, m1=bd, m2=(a+b)(c+d), hence
@@ -69,20 +98,16 @@ static void d2_seg_clear(d2_seg_t *s) {
 static void d2_ring_mul(d2_ring_t *out,
                         const d2_ring_t *x,
                         const d2_ring_t *y,
-                        mpz_t m0,
-                        mpz_t m1,
-                        mpz_t m2,
-                        mpz_t t0,
-                        mpz_t t1) {
-    mpz_mul(m0, x->a, y->a);
-    mpz_mul(m1, x->b, y->b);
-    mpz_add(t0, x->a, x->b);
-    mpz_add(t1, y->a, y->b);
-    mpz_mul(m2, t0, t1);
+                        d2_ws_t *ws) {
+    mpz_mul(ws->m0, x->a, y->a);
+    mpz_mul(ws->m1, x->b, y->b);
+    mpz_add(ws->t0, x->a, x->b);
+    mpz_add(ws->t1, y->a, y->b);
+    mpz_mul(ws->m2, ws->t0, ws->t1);
 
-    mpz_mul_ui(t0, m1, 15UL);
-    mpz_add(out->a, m0, t0);
-    mpz_sub(out->b, m2, m0);
+    mpz_set(out->a, ws->m0);
+    mpz_addmul_ui(out->a, ws->m1, 15UL);
+    mpz_sub(out->b, ws->m2, ws->m0);
 }
 
 static void d2_leaf(d2_seg_t *out,
@@ -92,35 +117,31 @@ static void d2_leaf(d2_seg_t *out,
                     const mpz_t zd,
                     const mpz_t b0,
                     const mpz_t b1,
-                    const mpz_t bd) {
-    mpz_t num, den, g, weight0;
-    mpz_inits(num, den, g, weight0, NULL);
-
+                    const mpz_t bd,
+                    d2_ws_t *ws) {
     /* r_n = A_n*z / (72*(n+1)^3). */
-    mpz_set_ui(num, 6UL * n + 1UL);
-    mpz_mul_ui(num, num, 2UL * n + 1UL);
-    mpz_mul_ui(num, num, 6UL * n + 5UL);
+    mpz_set_ui(ws->num, 6UL * n + 1UL);
+    mpz_mul_ui(ws->num, ws->num, 2UL * n + 1UL);
+    mpz_mul_ui(ws->num, ws->num, 6UL * n + 5UL);
 
-    mpz_set_ui(den, n + 1UL);
-    mpz_mul_ui(den, den, n + 1UL);
-    mpz_mul_ui(den, den, n + 1UL);
-    mpz_mul_ui(den, den, 72UL);
-    mpz_mul(den, den, zd);
+    mpz_set_ui(ws->den, n + 1UL);
+    mpz_mul_ui(ws->den, ws->den, n + 1UL);
+    mpz_mul_ui(ws->den, ws->den, n + 1UL);
+    mpz_mul_ui(ws->den, ws->den, 72UL);
+    mpz_mul(ws->den, ws->den, zd);
 
-    mpz_gcd(g, num, den);
-    mpz_divexact(num, num, g);
-    mpz_divexact(out->q, den, g);
+    mpz_gcd(ws->g, ws->num, ws->den);
+    mpz_divexact(ws->num, ws->num, ws->g);
+    mpz_divexact(out->q, ws->den, ws->g);
 
-    mpz_mul(out->p.a, z0, num);
-    mpz_mul(out->p.b, z1, num);
+    mpz_mul(out->p.a, z0, ws->num);
+    mpz_mul(out->p.b, z1, ws->num);
 
     /* Segment invariant: W = w/(BD*q), with W_leaf=beta+6n. */
-    mpz_mul_ui(weight0, bd, 6UL * n);
-    mpz_add(weight0, weight0, b0);
-    mpz_mul(out->w.a, weight0, out->q);
+    mpz_mul_ui(ws->weight0, bd, 6UL * n);
+    mpz_add(ws->weight0, ws->weight0, b0);
+    mpz_mul(out->w.a, ws->weight0, out->q);
     mpz_mul(out->w.b, b1, out->q);
-
-    mpz_clears(num, den, g, weight0, NULL);
 }
 
 static void d2_bs_build(d2_seg_t *out,
@@ -131,9 +152,10 @@ static void d2_bs_build(d2_seg_t *out,
                         const mpz_t zd,
                         const mpz_t b0,
                         const mpz_t b1,
-                        const mpz_t bd) {
+                        const mpz_t bd,
+                        d2_ws_t *ws) {
     if (b - a == 1UL) {
-        d2_leaf(out, a, z0, z1, zd, b0, b1, bd);
+        d2_leaf(out, a, z0, z1, zd, b0, b1, bd, ws);
         return;
     }
 
@@ -141,26 +163,19 @@ static void d2_bs_build(d2_seg_t *out,
     d2_seg_t left, right;
     d2_seg_init(&left);
     d2_seg_init(&right);
-    d2_bs_build(&left, a, m, z0, z1, zd, b0, b1, bd);
-    d2_bs_build(&right, m, b, z0, z1, zd, b0, b1, bd);
-
-    mpz_t m0, m1, m2, t0, t1;
-    mpz_inits(m0, m1, m2, t0, t1, NULL);
-    d2_ring_t rw;
-    d2_ring_init(&rw);
+    d2_bs_build(&left, a, m, z0, z1, zd, b0, b1, bd, ws);
+    d2_bs_build(&right, m, b, z0, z1, zd, b0, b1, bd, ws);
 
     mpz_mul(out->q, left.q, right.q);
-    d2_ring_mul(&out->p, &left.p, &right.p, m0, m1, m2, t0, t1);
+    d2_ring_mul(&out->p, &left.p, &right.p, ws);
 
     /* W = W_L + P_L*W_R. */
-    d2_ring_mul(&rw, &left.p, &right.w, m0, m1, m2, t0, t1);
+    d2_ring_mul(&ws->rw, &left.p, &right.w, ws);
     mpz_mul(out->w.a, left.w.a, right.q);
-    mpz_add(out->w.a, out->w.a, rw.a);
+    mpz_add(out->w.a, out->w.a, ws->rw.a);
     mpz_mul(out->w.b, left.w.b, right.q);
-    mpz_add(out->w.b, out->w.b, rw.b);
+    mpz_add(out->w.b, out->w.b, ws->rw.b);
 
-    d2_ring_clear(&rw);
-    mpz_clears(m0, m1, m2, t0, t1, NULL);
     d2_seg_clear(&left);
     d2_seg_clear(&right);
 }
@@ -193,7 +208,9 @@ static int d2_bs_pi(uint64_t digits,
 
     d2_seg_t tree;
     d2_seg_init(&tree);
-    d2_bs_build(&tree, 0UL, terms, z0, z1, zd, b0, b1, bd);
+    d2_ws_t ws;
+    d2_ws_init(&ws);
+    d2_bs_build(&tree, 0UL, terms, z0, z1, zd, b0, b1, bd, &ws);
 
     mpf_t omega, root61, fz0, fz1, fzd, fw0, fw1, fq, fbd,
           z, W, K, tmp, inv_pi, pi;
@@ -245,6 +262,7 @@ static int d2_bs_pi(uint64_t digits,
 
     mpf_clears(omega, root61, fz0, fz1, fzd, fw0, fw1, fq, fbd,
                z, W, K, tmp, inv_pi, pi, NULL);
+    d2_ws_clear(&ws);
     d2_seg_clear(&tree);
     mpz_clears(z0, z1, zd, b0, b1, bd, NULL);
     return ok;
