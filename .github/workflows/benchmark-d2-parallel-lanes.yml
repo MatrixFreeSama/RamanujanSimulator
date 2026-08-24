@@ -33,7 +33,7 @@ jobs:
           cd /dev/shm/rj_parallel
           ./benchmark_d2_parallel_lanes 100000 >/dev/null
           echo 'threshold,digits,rep,chud_s,d2_s,ratio,equal' > raw.csv
-          for threshold in 16384 65536 262144 1048576; do
+          for threshold in 2048 4096 8192 16384 32768 65536; do
             export D2_PARALLEL_THRESHOLD_BITS=$threshold
             for digits in 100000 300000 1000000; do
               for rep in $(seq 1 5); do
@@ -42,12 +42,13 @@ jobs:
                 d2=$(echo "$row" | cut -d, -f4)
                 ratio=$(echo "$row" | cut -d, -f6)
                 equal=$(echo "$row" | cut -d, -f8)
+                test "$equal" = 1
                 echo "$threshold,$digits,$rep,$chud,$d2,$ratio,$equal" >> raw.csv
               done
             done
           done
           echo 'threshold,digits,chud_median_s,d2_median_s,ratio_median' > summary.csv
-          for threshold in 16384 65536 262144 1048576; do
+          for threshold in 2048 4096 8192 16384 32768 65536; do
             for digits in 100000 300000 1000000; do
               vals=$(awk -F, -v t="$threshold" -v n="$digits" '$1==t && $2==n {print $4","$5","$6}' raw.csv)
               cm=$(echo "$vals" | cut -d, -f1 | sort -n | sed -n '3p')
@@ -56,7 +57,6 @@ jobs:
               echo "$threshold,$digits,$cm,$dm,$rm" >> summary.csv
             done
           done
-          awk -F, 'NR==1 || $7 != 1 {print}' raw.csv
           cat summary.csv
           cp raw.csv summary.csv "$GITHUB_WORKSPACE/build/"
       - name: Upload benchmark tables
