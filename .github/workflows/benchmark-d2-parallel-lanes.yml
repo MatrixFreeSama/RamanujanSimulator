@@ -1,0 +1,68 @@
+name: D2 parallel lanes benchmark
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libgmp-dev
+      - name: Build exact two-lane benchmark
+        run: |
+          mkdir -p build
+          gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic -fopenmp \
+            -Isrc -Ivalidation validation/benchmark_d2_parallel_lanes.c \
+            src/ramanujan_c_common.c -lgmp -lm \
+            -o build/benchmark_d2_parallel_lanes
+      - name: Sweep parallel threshold
+        env:
+          OMP_NUM_THREADS: '2'
+          OMP_DYNAMIC: 'false'
+          OMP_PROC_BIND: 'true'
+          OMP_PLACES: 'cores'
+        run: |
+          set -euo pipefail
+          rm -rf /dev/shm/rj_parallel
+          mkdir -p /dev/shm/rj_parallel/build
+          cp build/benchmark_d2_parallel_lanes /dev/shm/rj_parallel/
+          cd /dev/shm/rj_parallel
+          ./benchmark_d2_parallel_lanes 100000 >/dev/null
+          echo 'threshold,digits,rep,chud_s,d2_s,ratio,equal' > raw.csv
+          for threshold in 16384 65536 262144 1048576; do
+            export D2_PARALLEL_THRESHOLD_BITS=$threshold
+            for digits in 100000 300000 1000000; do
+              for rep in $(seq 1 5); do
+                row=$(./benchmark_d2_parallel_lanes "$digits" | tail -n 1)
+                chud=$(echo "$row" | cut -d, -f2)
+                d2=$(echo "$row" | cut -d, -f4)
+                ratio=$(echo "$row" | cut -d, -f6)
+                equal=$(echo "$row" | cut -d, -f8)
+                echo "$threshold,$digits,$rep,$chud,$d2,$ratio,$equal" >> raw.csv
+              done
+            done
+          done
+          echo 'threshold,digits,chud_median_s,d2_median_s,ratio_median' > summary.csv
+          for threshold in 16384 65536 262144 1048576; do
+            for digits in 100000 300000 1000000; do
+              vals=$(awk -F, -v t="$threshold" -v n="$digits" '$1==t && $2==n {print $4","$5","$6}' raw.csv)
+              cm=$(echo "$vals" | cut -d, -f1 | sort -n | sed -n '3p')
+              dm=$(echo "$vals" | cut -d, -f2 | sort -n | sed -n '3p')
+              rm=$(echo "$vals" | cut -d, -f3 | sort -n | sed -n '3p')
+              echo "$threshold,$digits,$cm,$dm,$rm" >> summary.csv
+            done
+          done
+          awk -F, 'NR==1 || $7 != 1 {print}' raw.csv
+          cat summary.csv
+          cp raw.csv summary.csv "$GITHUB_WORKSPACE/build/"
+      - name: Upload benchmark tables
+        uses: actions/upload-artifact@v4
+        with:
+          name: d2-parallel-lanes
+          path: |
+            build/raw.csv
+            build/summary.csv
