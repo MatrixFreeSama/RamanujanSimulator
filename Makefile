@@ -25,7 +25,7 @@ PI1000_EXPLICIT := $(BUILD)/pi1000_explicit.txt
 PI1000_TRACE := $(BUILD)/pi1000_newton_trace.txt
 EXPECTED_SHA256 := e898fea26734a6d3af5396b9f4c60ae5dcc88fc40944d835911a9ee8a672ea1b
 
-.PHONY: all clean core certify restore1000 explicit1000 trace1000 dimensionbench loworderbench d2basicbench smoke
+.PHONY: all clean core certify restore1000 explicit1000 trace1000 dimensionbench loworderbench d2basicbench d2classicbench smoke
 
 all: $(BUILD)/ramanujan_core $(BUILD)/ramanujan_certifier $(BUILD)/ramanujan_restore $(BUILD)/ramanujan_explicit_pi
 
@@ -53,6 +53,9 @@ $(BUILD)/ramanujan_low_order_bench: validation/benchmark_low_order_explicit_vs_c
 $(BUILD)/ramanujan_d2_basic_bench: validation/benchmark_original_d2_basic_vs_chud.c $(COMMON) $(HDR) | $(BUILD)
 	$(CC) $(CFLAGS) -I$(SRC) validation/benchmark_original_d2_basic_vs_chud.c $(COMMON) $(LDLIBS_COMMON) -o $@
 
+$(BUILD)/ramanujan_d2_classic_bench: validation/benchmark_d2_vs_agm_borwein.c validation/benchmark_original_d2_basic_vs_chud.c $(COMMON) $(HDR) | $(BUILD)
+	$(CC) $(CFLAGS) -I$(SRC) -Ivalidation validation/benchmark_d2_vs_agm_borwein.c $(COMMON) $(LDLIBS_COMMON) -o $@
+
 core: $(BUILD)/ramanujan_core
 	$(BUILD)/ramanujan_core
 
@@ -76,6 +79,9 @@ loworderbench: $(BUILD)/ramanujan_low_order_bench
 
 d2basicbench: $(BUILD)/ramanujan_d2_basic_bench
 	$(BUILD)/ramanujan_d2_basic_bench 1000 10000 30000 100000 200000
+
+d2classicbench: $(BUILD)/ramanujan_d2_classic_bench
+	$(BUILD)/ramanujan_d2_classic_bench 1000 10000 30000 100000 200000
 
 smoke: restore1000 explicit1000
 	@restored=$$(sha256sum $(PI1000) | awk '{print $$1}'); \
