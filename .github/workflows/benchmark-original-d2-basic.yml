@@ -21,7 +21,7 @@ jobs:
             -o build/benchmark_original_d2_basic_vs_chud
       - name: Run benchmark
         run: |
-          build/benchmark_original_d2_basic_vs_chud 1000 10000 30000 100000 | tee build/original_d2_vs_chud.csv
+          build/benchmark_original_d2_basic_vs_chud 1000 10000 30000 100000 200000 | tee build/original_d2_vs_chud.csv
       - name: Upload benchmark table
         uses: actions/upload-artifact@v4
         with:
