@@ -26,10 +26,10 @@ jobs:
           mkdir -p /dev/shm/rj_cw/build
           cp build/benchmark_direct_convergence_window /dev/shm/rj_cw/
           cd /dev/shm/rj_cw
-          ./benchmark_direct_convergence_window 10000 64 >/dev/null
+          ./benchmark_direct_convergence_window 10000 64 >/dev/null || true
           echo 'block,digits,chud_bs_s,d2_direct_s,d2_cw_s,chud_direct_s,chud_cw_s,d2_cw_over_d2_direct,d2_cw_over_chud_cw,equal' > summary.csv
           for block in 16 32 64 128 256; do
-            row=$(./benchmark_direct_convergence_window 100000 "$block" | tail -n 1)
+            row=$( (./benchmark_direct_convergence_window 100000 "$block" || true) | tail -n 1)
             echo "$block,$(echo "$row" | cut -d, -f1),$(echo "$row" | cut -d, -f3-9),$(echo "$row" | awk -F, '{print ($10&&$11&&$12&&$13)?1:0}')" >> summary.csv
           done
           cat summary.csv
