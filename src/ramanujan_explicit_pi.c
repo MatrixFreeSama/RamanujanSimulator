@@ -90,7 +90,12 @@ int main(int argc, char **argv) {
         mpf_div_ui(term, term, np1);
         mpf_div_ui(term, term, np1);
         mpf_div_ui(term, term, np1);
-        mpf_mul(term, term, z);
+        /* z0 = -1/151931373056000 exactly. Divide by the integer
+         * denominator and flip the sign instead of performing a full-precision
+         * floating multiply by z0 on every term.
+         */
+        mpf_div_ui(term, term, 151931373056000UL);
+        mpf_neg(term, term);
 
         const unsigned long weight = 13591409UL + 545140134UL * np1;
         mpf_mul_ui(tmp, term, weight);
