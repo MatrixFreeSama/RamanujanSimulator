@@ -21,11 +21,12 @@ HDR := $(SRC)/ramanujan_c_common.h
 CERT := $(BUILD)/Ramanujan_10K4_Implicit_Certificate_C.json
 CERT_TXT := $(BUILD)/Ramanujan_10K4_Implicit_Certificate_C.txt
 PI1000 := $(BUILD)/pi1000.txt
+PI1000_DIRECT := $(BUILD)/pi1000_direct.txt
 EXPECTED_SHA256 := e898fea26734a6d3af5396b9f4c60ae5dcc88fc40944d835911a9ee8a672ea1b
 
-.PHONY: all clean core certify restore1000 smoke
+.PHONY: all clean core certify restore1000 direct1000 smoke
 
-all: $(BUILD)/ramanujan_core $(BUILD)/ramanujan_certifier $(BUILD)/ramanujan_restore
+all: $(BUILD)/ramanujan_core $(BUILD)/ramanujan_certifier $(BUILD)/ramanujan_restore $(BUILD)/ramanujan_direct_pi
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -39,6 +40,9 @@ $(BUILD)/ramanujan_certifier: $(SRC)/ramanujan_10k4_certifier.c $(COMMON) $(HDR)
 $(BUILD)/ramanujan_restore: $(SRC)/ramanujan_certificate_restore.c $(COMMON) $(HDR) | $(BUILD)
 	$(CC) $(CFLAGS) $(JSON_C_CFLAGS) -I$(SRC) $(SRC)/ramanujan_certificate_restore.c $(COMMON) $(JSON_C_LIBS) $(LDLIBS_COMMON) -o $@
 
+$(BUILD)/ramanujan_direct_pi: $(SRC)/ramanujan_direct_pi.c $(COMMON) $(HDR) | $(BUILD)
+	$(CC) $(CFLAGS) -I$(SRC) $(SRC)/ramanujan_direct_pi.c $(COMMON) $(LDLIBS_COMMON) -o $@
+
 core: $(BUILD)/ramanujan_core
 	$(BUILD)/ramanujan_core
 
@@ -48,11 +52,19 @@ certify: $(BUILD)/ramanujan_certifier
 restore1000: certify $(BUILD)/ramanujan_restore
 	$(BUILD)/ramanujan_restore $(CERT) --digits 1000 --guard 140 --output $(PI1000)
 
-smoke: restore1000
-	@actual=$$(sha256sum $(PI1000) | awk '{print $$1}'); \
+direct1000: $(BUILD)/ramanujan_direct_pi
+	$(BUILD)/ramanujan_direct_pi --digits 1000 --guard 140 --output $(PI1000_DIRECT) --quiet
+
+smoke: restore1000 direct1000
+	@restored=$$(sha256sum $(PI1000) | awk '{print $$1}'); \
+	 direct=$$(sha256sum $(PI1000_DIRECT) | awk '{print $$1}'); \
 	 echo "expected: $(EXPECTED_SHA256)"; \
-	 echo "actual:   $$actual"; \
-	 test "$$actual" = "$(EXPECTED_SHA256)" && echo "SMOKE TEST: PASS"
+	 echo "restore:  $$restored"; \
+	 echo "direct:   $$direct"; \
+	 test "$$restored" = "$(EXPECTED_SHA256)"; \
+	 test "$$direct" = "$(EXPECTED_SHA256)"; \
+	 cmp $(PI1000) $(PI1000_DIRECT); \
+	 echo "SMOKE TEST: PASS"
 
 clean:
 	rm -rf $(BUILD)
