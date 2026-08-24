@@ -25,7 +25,7 @@ PI1000_EXPLICIT := $(BUILD)/pi1000_explicit.txt
 PI1000_TRACE := $(BUILD)/pi1000_newton_trace.txt
 EXPECTED_SHA256 := e898fea26734a6d3af5396b9f4c60ae5dcc88fc40944d835911a9ee8a672ea1b
 
-.PHONY: all clean core certify restore1000 explicit1000 trace1000 dimensionbench loworderbench d2basicbench d2classicbench d2bsbench d2parallelbench d2directtaperbench smoke
+.PHONY: all clean core certify restore1000 explicit1000 trace1000 dimensionbench loworderbench d2basicbench d2classicbench d2bsbench d2parallelbench d2directtaperbench d10convergencebench smoke
 
 all: $(BUILD)/ramanujan_core $(BUILD)/ramanujan_certifier $(BUILD)/ramanujan_restore $(BUILD)/ramanujan_explicit_pi
 
@@ -64,6 +64,9 @@ $(BUILD)/ramanujan_d2_parallel_bench: validation/benchmark_d2_parallel_lanes.c v
 
 $(BUILD)/ramanujan_d2_direct_taper_bench: validation/benchmark_direct_convergence_window.c validation/benchmark_original_d2_basic_vs_chud.c $(COMMON) $(HDR) | $(BUILD)
 	$(CC) $(CFLAGS) -I$(SRC) -Ivalidation validation/benchmark_direct_convergence_window.c $(COMMON) $(LDLIBS_COMMON) -o $@
+
+$(BUILD)/ramanujan_d10_convergence_bench: validation/benchmark_d10_single_term_convergence.c | $(BUILD)
+	$(CC) $(CFLAGS) validation/benchmark_d10_single_term_convergence.c $(LDLIBS_COMMON) -o $@
 
 $(BUILD)/ramanujan_agm_borwein_only_bench: validation/benchmark_agm_borwein_only.c validation/benchmark_original_d2_basic_vs_chud.c $(COMMON) $(HDR) | $(BUILD)
 	$(CC) $(CFLAGS) -I$(SRC) -Ivalidation validation/benchmark_agm_borwein_only.c $(COMMON) $(LDLIBS_COMMON) -o $@
@@ -105,6 +108,9 @@ d2parallelbench: $(BUILD)/ramanujan_d2_parallel_bench
 d2directtaperbench: $(BUILD)/ramanujan_d2_direct_taper_bench
 	$(BUILD)/ramanujan_d2_direct_taper_bench 100000 16
 	$(BUILD)/ramanujan_d2_direct_taper_bench 200000 16
+
+d10convergencebench: $(BUILD)/ramanujan_d10_convergence_bench
+	$(BUILD)/ramanujan_d10_convergence_bench
 
 smoke: restore1000 explicit1000
 	@restored=$$(sha256sum $(PI1000) | awk '{print $$1}'); \
