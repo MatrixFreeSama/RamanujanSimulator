@@ -19,18 +19,19 @@ jobs:
             -Isrc -Ivalidation validation/benchmark_direct_convergence_window.c \
             src/ramanujan_c_common.c -lgmp -lm \
             -o build/benchmark_direct_convergence_window
-      - name: Sweep convergence-window size
+      - name: Diagnose correctness
         run: |
           set -euo pipefail
           rm -rf /dev/shm/rj_cw
           mkdir -p /dev/shm/rj_cw/build
           cp build/benchmark_direct_convergence_window /dev/shm/rj_cw/
           cd /dev/shm/rj_cw
-          ./benchmark_direct_convergence_window 10000 64 >/dev/null || true
-          echo 'block,digits,chud_bs_s,d2_direct_s,d2_cw_s,chud_direct_s,chud_cw_s,d2_cw_over_d2_direct,d2_cw_over_chud_cw,equal' > summary.csv
-          for block in 16 32 64 128 256; do
-            row=$( (./benchmark_direct_convergence_window 100000 "$block" || true) | tail -n 1)
-            echo "$block,$(echo "$row" | cut -d, -f1),$(echo "$row" | cut -d, -f3-9),$(echo "$row" | awk -F, '{print ($10&&$11&&$12&&$13)?1:0}')" >> summary.csv
+          echo 'digits,block,chud_bs_s,d2_direct_s,d2_cw_s,chud_direct_s,chud_cw_s,d2_cw_over_d2_direct,d2_cw_over_chud_cw,eq_d2_base,eq_d2_cw,eq_chud_base,eq_chud_cw' > summary.csv
+          for digits in 10000 30000; do
+            for block in 16 64 256; do
+              row=$( (./benchmark_direct_convergence_window "$digits" "$block" || true) | tail -n 1)
+              echo "$row" >> summary.csv
+            done
           done
           cat summary.csv
           cp summary.csv "$GITHUB_WORKSPACE/build/"
