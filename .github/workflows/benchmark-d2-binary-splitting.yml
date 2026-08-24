@@ -1,0 +1,29 @@
+name: D2 binary splitting benchmark
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libgmp-dev
+      - name: Build benchmark
+        run: |
+          mkdir -p build
+          gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic \
+            -Isrc -Ivalidation validation/benchmark_d2_bs_vs_classics.c \
+            src/ramanujan_c_common.c -lgmp -lm \
+            -o build/benchmark_d2_bs_vs_classics
+      - name: Run benchmark
+        run: |
+          build/benchmark_d2_bs_vs_classics 1000 10000 30000 100000 200000 | tee build/d2_bs_vs_chud.csv
+      - name: Upload benchmark table
+        uses: actions/upload-artifact@v4
+        with:
+          name: d2-bs-vs-chud
+          path: build/d2_bs_vs_chud.csv
