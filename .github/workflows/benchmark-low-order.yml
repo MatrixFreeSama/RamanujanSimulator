@@ -20,7 +20,7 @@ jobs:
             -o build/benchmark_low_order_explicit_vs_chud
       - name: Run benchmark
         run: |
-          build/benchmark_low_order_explicit_vs_chud 1000 10000 30000 100000 | tee build/low_order_vs_chud.csv
+          build/benchmark_low_order_explicit_vs_chud 1000 10000 30000 100000 300000 | tee build/low_order_vs_chud.csv
       - name: Upload benchmark table
         uses: actions/upload-artifact@v4
         with:
