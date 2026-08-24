@@ -15,15 +15,15 @@ jobs:
       - name: Build candidates
         run: |
           mkdir -p build
-          gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic \
-            -Isrc -Ivalidation validation/benchmark_d2_physical_collapse.c \
+          gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic -fopenmp \
+            -Isrc -Ivalidation validation/benchmark_d2_physical_collapse_2lane.c \
             src/ramanujan_c_common.c -lgmp -lm \
-            -o build/benchmark_d2_physical_collapse
+            -o build/benchmark_d2_physical_collapse_2lane
           gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic -fopenmp \
             -Isrc -Ivalidation validation/benchmark_d2_parallel_lanes.c \
             src/ramanujan_c_common.c -lgmp -lm \
             -o build/benchmark_d2_parallel_lanes
-      - name: Run stable comparison
+      - name: Run top-collapse comparison
         env:
           OMP_NUM_THREADS: '2'
           OMP_DYNAMIC: 'false'
@@ -32,15 +32,14 @@ jobs:
           D2_PARALLEL_THRESHOLD_BITS: '4096'
         run: |
           set -euo pipefail
-          rm -rf /dev/shm/rj_collapse
-          mkdir -p /dev/shm/rj_collapse/build
-          cp build/benchmark_d2_physical_collapse build/benchmark_d2_parallel_lanes /dev/shm/rj_collapse/
-          cd /dev/shm/rj_collapse
-
-          ./benchmark_d2_physical_collapse 100000 1024 >/dev/null
+          rm -rf /dev/shm/rj_collapse2
+          mkdir -p /dev/shm/rj_collapse2/build
+          cp build/benchmark_d2_physical_collapse_2lane build/benchmark_d2_parallel_lanes /dev/shm/rj_collapse2/
+          cd /dev/shm/rj_collapse2
+          ./benchmark_d2_physical_collapse_2lane 100000 8192 >/dev/null
           ./benchmark_d2_parallel_lanes 100000 >/dev/null
 
-          echo 'kind,param,digits,rep,chud_s,d2_s,ratio,equal' > raw.csv
+          echo 'kind,param,digits,rep,chud_s,d2_s,ratio,equal' > raw2.csv
           for digits in 100000 300000 1000000; do
             for rep in $(seq 1 5); do
               row=$(./benchmark_d2_parallel_lanes "$digits" | tail -n 1)
@@ -49,46 +48,45 @@ jobs:
               ratio=$(echo "$row" | cut -d, -f6)
               equal=$(echo "$row" | cut -d, -f8)
               test "$equal" = 1
-              echo "parallel,4096,$digits,$rep,$chud,$d2,$ratio,$equal" >> raw.csv
+              echo "parallel,4096,$digits,$rep,$chud,$d2,$ratio,$equal" >> raw2.csv
             done
           done
 
-          for chunk in 256 1024 4096 8192; do
+          for chunk in 8192 16384 32768; do
             for digits in 100000 300000 1000000; do
               for rep in $(seq 1 3); do
-                row=$(./benchmark_d2_physical_collapse "$digits" "$chunk" | tail -n 1)
+                row=$(./benchmark_d2_physical_collapse_2lane "$digits" "$chunk" | tail -n 1)
                 chud=$(echo "$row" | cut -d, -f3)
                 d2=$(echo "$row" | cut -d, -f5)
                 ratio=$(echo "$row" | cut -d, -f7)
                 equal=$(echo "$row" | cut -d, -f8)
                 test "$equal" = 1
-                echo "collapse,$chunk,$digits,$rep,$chud,$d2,$ratio,$equal" >> raw.csv
+                echo "collapse2,$chunk,$digits,$rep,$chud,$d2,$ratio,$equal" >> raw2.csv
               done
             done
           done
 
-          echo 'kind,param,digits,chud_median_s,d2_median_s,ratio_median' > summary.csv
-          for kind in parallel collapse; do
-            if [ "$kind" = parallel ]; then params='4096'; else params='256 1024 4096 8192'; fi
+          echo 'kind,param,digits,chud_median_s,d2_median_s,ratio_median' > summary2.csv
+          for kind in parallel collapse2; do
+            if [ "$kind" = parallel ]; then params='4096'; else params='8192 16384 32768'; fi
             for param in $params; do
               for digits in 100000 300000 1000000; do
-                vals=$(awk -F, -v k="$kind" -v p="$param" -v n="$digits" '$1==k && $2==p && $3==n {print $5","$6","$7}' raw.csv)
+                vals=$(awk -F, -v k="$kind" -v p="$param" -v n="$digits" '$1==k && $2==p && $3==n {print $5","$6","$7}' raw2.csv)
                 count=$(echo "$vals" | sed '/^$/d' | wc -l)
-                if [ "$count" -eq 0 ]; then continue; fi
                 mid=$(( (count + 1) / 2 ))
                 cm=$(echo "$vals" | cut -d, -f1 | sort -n | sed -n "${mid}p")
                 dm=$(echo "$vals" | cut -d, -f2 | sort -n | sed -n "${mid}p")
                 rm=$(echo "$vals" | cut -d, -f3 | sort -n | sed -n "${mid}p")
-                echo "$kind,$param,$digits,$cm,$dm,$rm" >> summary.csv
+                echo "$kind,$param,$digits,$cm,$dm,$rm" >> summary2.csv
               done
             done
           done
-          cat summary.csv
-          cp raw.csv summary.csv "$GITHUB_WORKSPACE/build/"
+          cat summary2.csv
+          cp raw2.csv summary2.csv "$GITHUB_WORKSPACE/build/"
       - name: Upload benchmark tables
         uses: actions/upload-artifact@v4
         with:
-          name: d2-physical-collapse
+          name: d2-physical-collapse-2lane
           path: |
-            build/raw.csv
-            build/summary.csv
+            build/raw2.csv
+            build/summary2.csv
