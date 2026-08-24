@@ -12,18 +12,27 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential libgmp-dev
-      - name: Build benchmark
+      - name: Build accelerated benchmarks
         run: |
           mkdir -p build
           gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic \
             -Isrc -Ivalidation validation/benchmark_d2_bs_vs_classics.c \
             src/ramanujan_c_common.c -lgmp -lm \
             -o build/benchmark_d2_bs_vs_classics
-      - name: Run benchmark
+          gcc -O3 -march=native -std=c17 -Wall -Wextra -Wpedantic \
+            -Isrc -Ivalidation validation/benchmark_agm_borwein_only.c \
+            src/ramanujan_c_common.c -lgmp -lm \
+            -o build/benchmark_agm_borwein_only
+      - name: Run accelerated D2 and Chudnovsky
         run: |
           build/benchmark_d2_bs_vs_classics 1000 10000 30000 100000 200000 | tee build/d2_bs_vs_chud.csv
-      - name: Upload benchmark table
+      - name: Run AGM and Borwein against the same reference files
+        run: |
+          build/benchmark_agm_borwein_only 1000 10000 30000 100000 200000 | tee build/agm_borwein.csv
+      - name: Upload benchmark tables
         uses: actions/upload-artifact@v4
         with:
-          name: d2-bs-vs-chud
-          path: build/d2_bs_vs_chud.csv
+          name: accelerated-pi-comparison
+          path: |
+            build/d2_bs_vs_chud.csv
+            build/agm_borwein.csv
